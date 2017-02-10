@@ -15,9 +15,22 @@
   angular.module('hariRtc.services', []);
   angular.module('hariRtc',
       [
+          'btford.socket-io',
+          'ionic',
+          'config',
           'hariRtc.config',
           'hariRtc.directives',
           'hariRtc.services'
       ]);
 
 })(angular);
+
+angular.module('hariRtc').run(function ($state, signaling, hariModal) {
+  signaling.on('messageReceived', function (name, message) {
+    switch (message.type) {
+      case 'call': //called by other party
+        iRestModal.show('views/call.html', 'CallCtrl', { isCalling: false, contactName: name  });
+        break;
+    }
+  });
+})

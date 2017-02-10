@@ -7,7 +7,11 @@
       "email": "iwp3@pitt.edu"
     }
   ],
-  "main": ["dist/hari-rtc.js"],
+  "main": [
+    "dist/hari-rtc.js",
+    "dist/views/call.html",
+    "dist/css/rtc.css"
+  ],
   "ignore": [
     "src",
     "test",
@@ -15,7 +19,10 @@
     "karma-*.conf.js",
     "**/.*"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "angular-socket-io": "^0.7.0",
+    "ionic": "v1.0.0-beta.11"
+  },
   "devDependencies": {
     "angular-mocks": ">=1.2.0",
     "angular-scenario": ">=1.2.0",
