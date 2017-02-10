@@ -1,0 +1,29 @@
+{
+  "generator-angularjs-library": {
+    "props": {
+      "author": {
+        "name": "Wayan P",
+        "email": "iwp3@pitt.edu"
+      },
+      "libraryName": {
+        "original": "hari-rtc",
+        "camelized": "hariRtc",
+        "dasherized": "hari-rtc",
+        "slugified": "hari-rtc",
+        "parts": [
+          "hari",
+          "rtc"
+        ]
+      },
+      "includeModuleDirectives": true,
+      "includeModuleFilters": false,
+      "includeModuleServices": true,
+      "includeAngularModuleResource": false,
+      "includeAngularModuleCookies": false,
+      "includeAngularModuleSanitize": false,
+      "librarySrcDirectory": "src/hari-rtc",
+      "libraryUnitTestDirectory": "test/unit/hari-rtc",
+      "libraryUnitE2eDirectory": "test/e2e/hari-rtc"
+    }
+  }
+}
