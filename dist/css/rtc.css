@@ -1,5 +1,10 @@
 /* Video call related */
 
+.calling-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
 .calling-container p {
   font-weight: bold;
   font-size: 20px;
