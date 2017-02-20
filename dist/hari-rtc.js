@@ -29,7 +29,7 @@ angular.module('hariRtc').run(["$state", "signaling", "hariModal", function ($st
   signaling.on('messageReceived', function (name, message) {
     switch (message.type) {
       case 'call': //called by other party
-        iRestModal.show('views/call.html', 'CallCtrl', { isCalling: false, contactName: name  });
+        hariModal.show('views/call.html', 'CallCtrl', { isCalling: false, contactName: name  });
         break;
     }
   });
