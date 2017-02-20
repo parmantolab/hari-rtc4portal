@@ -17,7 +17,7 @@
       [
           'btford.socket-io',
           'ionic',
-          'config',
+          'app.config',
           'hariRtc.config',
           'hariRtc.directives',
           'hariRtc.services'

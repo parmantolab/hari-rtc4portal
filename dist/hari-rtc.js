@@ -17,7 +17,7 @@
       [
           'btford.socket-io',
           'ionic',
-          'config',
+          'app.config',
           'hariRtc.config',
           'hariRtc.directives',
           'hariRtc.services'
@@ -397,10 +397,10 @@ angular.module('hariRtc.services').factory("hariModal", function($ionicModal, $r
 
 
 }) // end
-angular.module('hariRtc.services').factory('signaling', function (socketFactory, ENV) {
+angular.module('hariRtc.services').factory('signaling', function (socketFactory, env) {
 
-	if(!ENV.signalingEndpoint){
-		ENV.signalingEndpoint = 'https://irest.pitt.edu:8080/';
+	if(!env.signalingEndpoint){
+		env.signalingEndpoint = 'https://irest.pitt.edu:8080/';
 	}
     var socket = io.connect(ENV.signalingEndpoint, {secure: true});
     
