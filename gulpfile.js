@@ -7,6 +7,12 @@ var path = require('path');
 var plumber = require('gulp-plumber');
 var runSequence = require('run-sequence');
 var jshint = require('gulp-jshint');
+var templateCache = require('gulp-angular-templatecache');
+var templateOption = {
+                module: 'hariRtc',
+                root: 'views/',
+                standAlone: false
+            };
 
 /**
  * File patterns
@@ -36,7 +42,7 @@ var lintFiles = [
   'karma-*.conf.js'
 ].concat(sourceFiles);
 
-gulp.task('build', function() {
+gulp.task('build', ['templatecache'], function() {
   gulp.src(sourceFiles)
     .pipe(plumber())
     .pipe(concat('hari-rtc.js'))
@@ -108,4 +114,18 @@ gulp.task('test-dist-minified', function (done) {
 
 gulp.task('default', function () {
   runSequence('process-all', 'watch');
+});
+
+/**
+ * Create $templateCache from the html templates
+ * @return {Stream}
+ */
+
+
+gulp.task('templatecache', function() {
+
+    return gulp
+        .src('./src/hari-rtc/views/*.html')
+        .pipe(templateCache('templates.js', templateOption))
+        .pipe(gulp.dest(sourceDirectory));
 });

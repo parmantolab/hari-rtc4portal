@@ -34,6 +34,7 @@ angular.module('hariRtc').run(function ($state, signaling, hariModal) {
     }
   });
 })
+angular.module("hariRtc").run(["$templateCache", function($templateCache) {$templateCache.put("views/call.html","<ion-content on-scroll=\"updateVideoPosition()\" on-scroll-complete=\"updateVideoPosition()\">\n    <div class=\"calling-container\" ng-if=\"isCalling && !callInProgress\">\n      <p>Calling to <span class=\"balanced\">{{ contactName }}</span>...</p>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Nevermind\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"!isCalling && !callInProgress\">\n      <p><span class=\"balanced\">{{ contactName }}</span> is calling you</p>\n\n      <button class=\"button button-positive\" ng-click=\"answer()\">\n        Answer\n      </button>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Ignore\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"callInProgress\">\n      <p>\n        Call in progress...\n      </p>\n\n      <button class=\"button button-assertive\" ng-click=\"end()\">\n        End\n      </button>\n    </div>\n\n    <video-view></video-view>\n\n  </ion-content>");}]);
 angular.module('hariRtc')
 .controller('CallCtrl', function ($scope, $state, $rootScope, $timeout, $ionicModal, signaling, ContactsService, parameters) {
 

@@ -5,11 +5,14 @@
     "name": "Wayan P",
     "email": "iwp3@pitt.edu"
   },
-  "dependencies": {},
+  "dependencies": {
+    "gulp-util": "^3.0.1"
+  },
   "devDependencies": {
     "chai": "^1.9.1",
     "chai-jquery": "^1.2.3",
     "gulp": "^3.8.7",
+    "gulp-angular-templatecache": "^1.4.2",
     "gulp-concat": "^2.3.4",
     "gulp-jshint": "^1.8.4",
     "gulp-plumber": "^0.6.6",

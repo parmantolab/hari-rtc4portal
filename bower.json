@@ -9,7 +9,6 @@
   ],
   "main": [
     "dist/hari-rtc.js",
-    "dist/views/call.html",
     "dist/css/rtc.css"
   ],
   "ignore": [
