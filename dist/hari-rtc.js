@@ -25,7 +25,7 @@
 
 })(angular);
 
-angular.module('hariRtc').run(function ($state, signaling, hariModal) {
+angular.module('hariRtc').run(["$state", "signaling", "hariModal", function ($state, signaling, hariModal) {
   signaling.on('messageReceived', function (name, message) {
     switch (message.type) {
       case 'call': //called by other party
@@ -33,10 +33,10 @@ angular.module('hariRtc').run(function ($state, signaling, hariModal) {
         break;
     }
   });
-})
+}])
 angular.module("hariRtc").run(["$templateCache", function($templateCache) {$templateCache.put("views/call.html","<ion-content on-scroll=\"updateVideoPosition()\" on-scroll-complete=\"updateVideoPosition()\">\n    <div class=\"calling-container\" ng-if=\"isCalling && !callInProgress\">\n      <p>Calling to <span class=\"balanced\">{{ contactName }}</span>...</p>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Nevermind\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"!isCalling && !callInProgress\">\n      <p><span class=\"balanced\">{{ contactName }}</span> is calling you</p>\n\n      <button class=\"button button-positive\" ng-click=\"answer()\">\n        Answer\n      </button>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Ignore\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"callInProgress\">\n      <p>\n        Call in progress...\n      </p>\n\n      <button class=\"button button-assertive\" ng-click=\"end()\">\n        End\n      </button>\n    </div>\n\n    <video-view></video-view>\n\n  </ion-content>");}]);
 angular.module('hariRtc')
-.controller('CallCtrl', function ($scope, $state, $rootScope, $timeout, $ionicModal, signaling, ContactsService, parameters) {
+.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "$ionicModal", "signaling", "ContactsService", "parameters",function ($scope, $state, $rootScope, $timeout, $ionicModal, signaling, ContactsService, parameters) {
 
     console.log("parameter "+JSON.stringify(parameters));
 
@@ -263,8 +263,8 @@ angular.module('hariRtc')
       clearInterval(window.ringingIntervalId);
       signaling.removeListener('messageReceived', onMessageReceive);
     });
-  });
-angular.module('hariRtc.directives').directive('videoView', function ($rootScope, $timeout) {
+  }]);
+angular.module('hariRtc.directives').directive('videoView', ["$rootScope", "$timeout", function ($rootScope, $timeout) {
     return {
       restrict: 'E',
       template: '<div class="video-container"></div>',
@@ -284,9 +284,9 @@ angular.module('hariRtc.directives').directive('videoView', function ($rootScope
         $rootScope.$on('videoView.updatePosition', updatePosition);
       }
     }
-  });
+  }]);
 angular.module('hariRtc.services')
-.factory('ContactsService', function (signaling) {
+.factory('ContactsService', ["signaling", function (signaling) {
     var onlineUsers = [];
 
     signaling.on('online', function (name) {
@@ -315,8 +315,10 @@ angular.module('hariRtc.services')
         });
       }
     }
-  });
-angular.module('hariRtc.services').factory("hariModal", function($ionicModal, $rootScope, $q, $injector, $controller) {
+  }]);
+angular
+.module('hariRtc.services')
+.factory("hariModal", ["$ionicModal", "$rootScope", "$q", "$injector", "$controller", function($ionicModal, $rootScope, $q, $injector, $controller) {
 
     return {
         show: show
@@ -396,8 +398,8 @@ angular.module('hariRtc.services').factory("hariModal", function($ionicModal, $r
     }
 
 
-}) // end
-angular.module('hariRtc.services').factory('signaling', function (socketFactory, env) {
+}]) // end
+angular.module('hariRtc.services').factory('signaling', ["socketFactory", "env",function (socketFactory, env) {
 
 	if(!env.signalingEndpoint){
 		env.signalingEndpoint = 'https://irest.pitt.edu:8080/';
@@ -409,4 +411,4 @@ angular.module('hariRtc.services').factory('signaling', function (socketFactory,
     });
 
     return socketFactory;
-  });
+  }]);

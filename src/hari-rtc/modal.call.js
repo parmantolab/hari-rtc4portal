@@ -1,5 +1,5 @@
 angular.module('hariRtc')
-.controller('CallCtrl', function ($scope, $state, $rootScope, $timeout, $ionicModal, signaling, ContactsService, parameters) {
+.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "$ionicModal", "signaling", "ContactsService", "parameters",function ($scope, $state, $rootScope, $timeout, $ionicModal, signaling, ContactsService, parameters) {
 
     console.log("parameter "+JSON.stringify(parameters));
 
@@ -226,4 +226,4 @@ angular.module('hariRtc')
       clearInterval(window.ringingIntervalId);
       signaling.removeListener('messageReceived', onMessageReceive);
     });
-  });
+  }]);

@@ -25,7 +25,7 @@
 
 })(angular);
 
-angular.module('hariRtc').run(function ($state, signaling, hariModal) {
+angular.module('hariRtc').run(["$state", "signaling", "hariModal", function ($state, signaling, hariModal) {
   signaling.on('messageReceived', function (name, message) {
     switch (message.type) {
       case 'call': //called by other party
@@ -33,4 +33,4 @@ angular.module('hariRtc').run(function ($state, signaling, hariModal) {
         break;
     }
   });
-})
+}])

@@ -1,5 +1,5 @@
 angular.module('hariRtc.services')
-.factory('ContactsService', function (signaling) {
+.factory('ContactsService', ["signaling", function (signaling) {
     var onlineUsers = [];
 
     signaling.on('online', function (name) {
@@ -28,4 +28,4 @@ angular.module('hariRtc.services')
         });
       }
     }
-  });
+  }]);

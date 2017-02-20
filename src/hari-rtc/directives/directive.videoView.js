@@ -1,4 +1,4 @@
-angular.module('hariRtc.directives').directive('videoView', function ($rootScope, $timeout) {
+angular.module('hariRtc.directives').directive('videoView', ["$rootScope", "$timeout", function ($rootScope, $timeout) {
     return {
       restrict: 'E',
       template: '<div class="video-container"></div>',
@@ -18,4 +18,4 @@ angular.module('hariRtc.directives').directive('videoView', function ($rootScope
         $rootScope.$on('videoView.updatePosition', updatePosition);
       }
     }
-  });
+  }]);

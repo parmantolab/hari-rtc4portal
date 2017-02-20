@@ -1,4 +1,4 @@
-angular.module('hariRtc.services').factory('signaling', function (socketFactory, env) {
+angular.module('hariRtc.services').factory('signaling', ["socketFactory", "env",function (socketFactory, env) {
 
 	if(!env.signalingEndpoint){
 		env.signalingEndpoint = 'https://irest.pitt.edu:8080/';
@@ -10,4 +10,4 @@ angular.module('hariRtc.services').factory('signaling', function (socketFactory,
     });
 
     return socketFactory;
-  });
+  }]);

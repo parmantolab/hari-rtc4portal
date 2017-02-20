@@ -1,4 +1,6 @@
-angular.module('hariRtc.services').factory("hariModal", function($ionicModal, $rootScope, $q, $injector, $controller) {
+angular
+.module('hariRtc.services')
+.factory("hariModal", ["$ionicModal", "$rootScope", "$q", "$injector", "$controller", function($ionicModal, $rootScope, $q, $injector, $controller) {
 
     return {
         show: show
@@ -78,4 +80,4 @@ angular.module('hariRtc.services').factory("hariModal", function($ionicModal, $r
     }
 
 
-}) // end
+}]) // end
