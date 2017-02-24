@@ -15,7 +15,7 @@ angular.module('hariRtc')
     $scope.hideFromContactList = [$scope.contactName];
     $scope.muted = false;
 
-    $ionicModal.fromTemplateUrl('templates/select_contact.html', {
+    $ionicModal.fromTemplateUrl('views/select_contact.html', {
       scope: $scope,
       animation: 'slide-in-up'
     }).then(function(modal) {
