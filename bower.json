@@ -20,11 +20,14 @@
   ],
   "dependencies": {
     "angular-socket-io": "^0.7.0",
-    "ionic": "v1.0.0-beta.11"
+    "socket.io": "https://irest.pitt.edu:8080/socket.io/socket.io.js"
   },
   "devDependencies": {
     "angular-mocks": ">=1.2.0",
     "angular-scenario": ">=1.2.0",
     "angular": ">=1.2.0"
+  },
+  "resolutions": {
+    "angular": "1.6.2"
   }
 }
