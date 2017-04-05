@@ -28,7 +28,11 @@ angular.module('hariRtc').run(["signaling", "hariModal", function (signaling, ha
   signaling.on('messageReceived', function (name, message) {
     switch (message.type) {
       case 'call': //called by other party
-        hariModal.show('views/call.html', 'CallCtrl', { isCalling: false, contactName: name  });
+        var params = {parameters: {isCalling : true, contactName: name}};
+        hariModal({templateUrl: 'views/call.html', 
+                        controller: 'CallCtrl', 
+                        parameters : params
+                    }).activate();
         break;
     }
   });
@@ -2327,7 +2331,7 @@ module.exports = {
         localVideoView.autoplay = true;
         localVideoView.muted = true;
         localVideoView.style.position = 'absolute';
-        localVideoView.style.zIndex = 999;
+        localVideoView.style.zIndex = 1001; //need to change to 1001 because semantic modal use 999
         localVideoView.addEventListener("loadedmetadata", scaleToFill);
 
         refreshLocalVideoView();
@@ -2512,10 +2516,10 @@ function onSessionDisconnect(sessionKey) {
 require("cordova/exec/proxy").add("PhoneRTCPlugin", module.exports);
 });
 
-angular.module("hariRtc").run(["$templateCache", function($templateCache) {$templateCache.put("views/call.html","<div on-scroll=\"updateVideoPosition()\" on-scroll-complete=\"updateVideoPosition()\">\n    <div class=\"calling-container\" ng-if=\"isCalling && !callInProgress\">\n      <p>Calling to <span class=\"balanced\">{{ contactName }}</span>...</p>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Nevermind\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"!isCalling && !callInProgress\">\n      <p><span class=\"balanced\">{{ contactName }}</span> is calling you</p>\n\n      <button class=\"ui button primary\" ng-click=\"answer()\">\n        Answer\n      </button>\n\n      <button class=\"ui button red\" ng-click=\"ignore()\">\n        Ignore\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"callInProgress\">\n      <p>\n        Call in progress...\n      </p>\n\n      <button class=\"ui button red\" ng-click=\"end()\">\n        End\n      </button>\n    </div>\n\n    <video-view></video-view>\n\n  </div>");
+angular.module("hariRtc").run(["$templateCache", function($templateCache) {$templateCache.put("views/call.html","<modal on-scroll=\"updateVideoPosition()\" on-scroll-complete=\"updateVideoPosition()\">\n    <div class=\"calling-container\" ng-if=\"isCalling && !callInProgress\">\n      <p>Calling to <span class=\"balanced\">{{ contactName }}</span>...</p>\n\n      <div class=\"ui button red\" ng-click=\"ignore()\">\n        Nevermind\n      </div>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"!isCalling && !callInProgress\">\n      <p><span class=\"balanced\">{{ contactName }}</span> is calling you</p>\n\n      <div class=\"ui button primary\" ng-click=\"answer()\">\n        Answer\n      </div>\n\n      <div class=\"ui button red\" ng-click=\"ignore()\">\n        Ignore\n      </div>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"callInProgress\">\n      <p>\n        Call in progress...\n      </p>\n\n      <div class=\"ui button red\" ng-click=\"end()\">\n        End\n      </div>\n    </div>\n\n    <video-view></video-view>\n\n  </modal>");
 $templateCache.put("views/select_contact.html","<ion-modal-view>\n  <ion-header-bar class=\"bar-positive\">\n    <h1 class=\"title\">Add Contact to Call</h1>\n      <button class=\"button button-clear\" ng-click=\"closeSelectContactModal()\">\n        Close\n      </button>\n  </ion-header-bar>\n  <ion-content>\n    <ul class=\"list\">\n      <li class=\"item item-button-right\"\n          ng-repeat=\"contact in allContacts | filter:hideCurrentUsers()\">\n        <i class=\"icon ion-record\" style=\"color: green\"></i>\n        {{ contact }}\n        <button class=\"button button-positive\" \n                ng-click=\"addContact(contact)\">\n          <i class=\"icon ion-ios7-telephone\"></i>\n        </button>\n      </li>\n    </ul>\n  </ion-content>\n</ion-modal-view>");}]);
 angular.module('hariRtc')
-.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "signaling", "ContactsService", "hariModal", "parameters",function ($scope, $state, $rootScope, $timeout, signaling, ContactsService, parameters) {
+.controller('CallCtrl', ["$scope", "$rootScope", "$timeout", "signaling", "ContactsService", "parameters",function ($scope, $rootScope, $timeout, signaling, ContactsService, parameters) {
 
     console.log("parameter "+JSON.stringify(parameters));
 
@@ -2541,8 +2545,8 @@ angular.module('hariRtc')
     */
 
     //ring! well actually beep
-    navigator.notification.beep(1);
-    window.ringingIntervalId = setInterval(navigator.notification.beep, 2500, 1);
+    //navigator.notification.beep(1);
+    //window.ringingIntervalId = setInterval(navigator.notification.beep, 2500, 1);
 
     function call(isInitiator, contactName) {
       console.log(new Date().toString() + ': calling to ' + contactName + ', isInitiator: ' + isInitiator);
@@ -2582,7 +2586,7 @@ angular.module('hariRtc')
 
         if (Object.keys($scope.contacts).length === 0) {
           signaling.emit('sendMessage', contactName, { type: 'ignore' });
-          hariModal.deactivate();
+          $scope.closeMe();
         }
       });
 
@@ -2602,7 +2606,7 @@ angular.module('hariRtc')
         $scope.contacts[contactNames[0]].disconnect();
       } else {
         signaling.emit('sendMessage', parameters.contactName, { type: 'ignore' });
-        hariModal.deactivate();
+        $scope.closeMe();
       }
       
     };
@@ -2613,7 +2617,7 @@ angular.module('hariRtc')
         $scope.contacts[contact].close();
         delete $scope.contacts[contact];
       });
-      hariModal.deactivate();
+      $scope.closeMe();
     };
 
     $scope.answer = function () {
@@ -2702,10 +2706,10 @@ angular.module('hariRtc')
             }
 
             if (Object.keys($scope.contacts).length === 0) {
-              hariModal.deactivate();
+              $scope.closeMe();
             }
           } else {
-            hariModal.deactivate();
+            $scope.closeMe();
           }
 
           break;
@@ -2860,13 +2864,20 @@ function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $h
         if (controllerAs) {
           scope[controllerAs] = ctrl;
         }
+        scope.closeMe = deactivate;
       } else if (locals) {
         for (var prop in locals) {
           scope[prop] = locals[prop];
         }
       }
-      $compile(element)(scope);
-      return $animate.enter(element, container);
+      var modalEl = $compile(element)(scope);
+      return modalEl.modal({
+                    closable: false,
+                    duration: 100,
+                    blurring: true
+                })
+                .modal("show");
+      //return $animate.enter(element, container);
     }
 
     function deactivate () {

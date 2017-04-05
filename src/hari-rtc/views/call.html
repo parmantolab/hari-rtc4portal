@@ -1,22 +1,22 @@
-<div on-scroll="updateVideoPosition()" on-scroll-complete="updateVideoPosition()">
+<modal on-scroll="updateVideoPosition()" on-scroll-complete="updateVideoPosition()">
     <div class="calling-container" ng-if="isCalling && !callInProgress">
       <p>Calling to <span class="balanced">{{ contactName }}</span>...</p>
 
-      <button class="button button-assertive" ng-click="ignore()">
+      <div class="ui button red" ng-click="ignore()">
         Nevermind
-      </button>
+      </div>
     </div>
 
     <div class="calling-container" ng-if="!isCalling && !callInProgress">
       <p><span class="balanced">{{ contactName }}</span> is calling you</p>
 
-      <button class="ui button primary" ng-click="answer()">
+      <div class="ui button primary" ng-click="answer()">
         Answer
-      </button>
+      </div>
 
-      <button class="ui button red" ng-click="ignore()">
+      <div class="ui button red" ng-click="ignore()">
         Ignore
-      </button>
+      </div>
     </div>
 
     <div class="calling-container" ng-if="callInProgress">
@@ -24,11 +24,11 @@
         Call in progress...
       </p>
 
-      <button class="ui button red" ng-click="end()">
+      <div class="ui button red" ng-click="end()">
         End
-      </button>
+      </div>
     </div>
 
     <video-view></video-view>
 
-  </div>
+  </modal>

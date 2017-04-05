@@ -1,5 +1,5 @@
 angular.module('hariRtc')
-.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "signaling", "ContactsService", "hariModal", "parameters",function ($scope, $state, $rootScope, $timeout, signaling, ContactsService, parameters) {
+.controller('CallCtrl', ["$scope", "$rootScope", "$timeout", "signaling", "ContactsService", "parameters",function ($scope, $rootScope, $timeout, signaling, ContactsService, parameters) {
 
     console.log("parameter "+JSON.stringify(parameters));
 
@@ -25,8 +25,8 @@ angular.module('hariRtc')
     */
 
     //ring! well actually beep
-    navigator.notification.beep(1);
-    window.ringingIntervalId = setInterval(navigator.notification.beep, 2500, 1);
+    //navigator.notification.beep(1);
+    //window.ringingIntervalId = setInterval(navigator.notification.beep, 2500, 1);
 
     function call(isInitiator, contactName) {
       console.log(new Date().toString() + ': calling to ' + contactName + ', isInitiator: ' + isInitiator);
@@ -66,7 +66,7 @@ angular.module('hariRtc')
 
         if (Object.keys($scope.contacts).length === 0) {
           signaling.emit('sendMessage', contactName, { type: 'ignore' });
-          hariModal.deactivate();
+          $scope.closeMe();
         }
       });
 
@@ -86,7 +86,7 @@ angular.module('hariRtc')
         $scope.contacts[contactNames[0]].disconnect();
       } else {
         signaling.emit('sendMessage', parameters.contactName, { type: 'ignore' });
-        hariModal.deactivate();
+        $scope.closeMe();
       }
       
     };
@@ -97,7 +97,7 @@ angular.module('hariRtc')
         $scope.contacts[contact].close();
         delete $scope.contacts[contact];
       });
-      hariModal.deactivate();
+      $scope.closeMe();
     };
 
     $scope.answer = function () {
@@ -186,10 +186,10 @@ angular.module('hariRtc')
             }
 
             if (Object.keys($scope.contacts).length === 0) {
-              hariModal.deactivate();
+              $scope.closeMe();
             }
           } else {
-            hariModal.deactivate();
+            $scope.closeMe();
           }
 
           break;

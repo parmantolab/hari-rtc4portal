@@ -317,7 +317,7 @@ module.exports = {
         localVideoView.autoplay = true;
         localVideoView.muted = true;
         localVideoView.style.position = 'absolute';
-        localVideoView.style.zIndex = 999;
+        localVideoView.style.zIndex = 1001; //need to change to 1001 because semantic modal use 999
         localVideoView.addEventListener("loadedmetadata", scaleToFill);
 
         refreshLocalVideoView();
