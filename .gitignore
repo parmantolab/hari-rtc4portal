@@ -5,6 +5,7 @@
 .idea
 .project
 .settings
+*.js-ionic
 
 # Ignore node stuff
 node_modules/

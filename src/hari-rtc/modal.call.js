@@ -1,5 +1,5 @@
 angular.module('hariRtc')
-.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "$ionicModal", "signaling", "ContactsService", "parameters",function ($scope, $state, $rootScope, $timeout, $ionicModal, signaling, ContactsService, parameters) {
+.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "signaling", "ContactsService", "hariModal", "parameters",function ($scope, $state, $rootScope, $timeout, signaling, ContactsService, parameters) {
 
     console.log("parameter "+JSON.stringify(parameters));
 
@@ -15,12 +15,14 @@ angular.module('hariRtc')
     $scope.hideFromContactList = [$scope.contactName];
     $scope.muted = false;
 
+    /*
     $ionicModal.fromTemplateUrl('views/select_contact.html', {
       scope: $scope,
       animation: 'slide-in-up'
     }).then(function(modal) {
       $scope.selectContactModal = modal;
     });
+    */
 
     //ring! well actually beep
     navigator.notification.beep(1);
@@ -64,7 +66,7 @@ angular.module('hariRtc')
 
         if (Object.keys($scope.contacts).length === 0) {
           signaling.emit('sendMessage', contactName, { type: 'ignore' });
-          $scope.closeModal();
+          hariModal.deactivate();
         }
       });
 
@@ -84,7 +86,7 @@ angular.module('hariRtc')
         $scope.contacts[contactNames[0]].disconnect();
       } else {
         signaling.emit('sendMessage', parameters.contactName, { type: 'ignore' });
-        $scope.closeModal();
+        hariModal.deactivate();
       }
       
     };
@@ -95,7 +97,7 @@ angular.module('hariRtc')
         $scope.contacts[contact].close();
         delete $scope.contacts[contact];
       });
-      $scope.closeModal();
+      hariModal.deactivate();
     };
 
     $scope.answer = function () {
@@ -184,10 +186,10 @@ angular.module('hariRtc')
             }
 
             if (Object.keys($scope.contacts).length === 0) {
-              $scope.closeModal();
+              hariModal.deactivate();
             }
           } else {
-            $scope.closeModal();
+            hariModal.deactivate();
           }
 
           break;

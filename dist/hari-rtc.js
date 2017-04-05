@@ -16,7 +16,6 @@
   angular.module('hariRtc',
       [
           'btford.socket-io',
-          'ionic',
           'app.config',
           'hariRtc.config',
           'hariRtc.directives',
@@ -25,7 +24,7 @@
 
 })(angular);
 
-angular.module('hariRtc').run(["$state", "signaling", "hariModal", function ($state, signaling, hariModal) {
+angular.module('hariRtc').run(["signaling", "hariModal", function (signaling, hariModal) {
   signaling.on('messageReceived', function (name, message) {
     switch (message.type) {
       case 'call': //called by other party
@@ -34,510 +33,6 @@ angular.module('hariRtc').run(["$state", "signaling", "hariModal", function ($st
     }
   });
 }])
-cordova.define("com.dooble.phonertc.PhoneRTCProxy", function(require, exports, module) { 
-var PeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
-var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
-var MediaStream = window.webkitMediaStream || window.mozMediaStream || window.MediaStream;
-
-navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
-
-var localStreams = [];
-var localVideoTrack, localAudioTrack;
-
-function Session(sessionKey, config, sendMessageCallback) {
-  var self = this;
-  self.sessionKey = sessionKey;
-  self.config = config;
-  self.sendMessage = sendMessageCallback;
-
-  self.onIceCandidate = function (event) {
-    if (event.candidate) {
-      self.sendMessage({
-        type: 'candidate',
-        label: event.candidate.sdpMLineIndex,
-        id: event.candidate.sdpMid,
-        candidate: event.candidate.candidate
-      });
-    }
-  };
-
-  self.onRemoteStreamAdded = function (event) {
-    self.videoView = addRemoteStream(event.stream);
-    self.sendMessage({ type: '__answered' });
-  };
-
-  self.setRemote = function (message) {
-    message.sdp = self.addCodecParam(message.sdp, 'opus/48000', 'stereo=1');
-
-    this.peerConnection.setRemoteDescription(new SessionDescription(message), function () {
-      console.log('setRemote success');
-    }, function (error) { 
-      console.log(error); 
-    });
-  };
-
-  // Adds fmtp param to specified codec in SDP.
-  self.addCodecParam = function (sdp, codec, param) {
-    var sdpLines = sdp.split('\r\n');
-
-    // Find opus payload.
-    var index = self.findLine(sdpLines, 'a=rtpmap', codec);
-    var payload;
-    if (index) {
-      payload = self.getCodecPayloadType(sdpLines[index]);
-    }
-
-    // Find the payload in fmtp line.
-    var fmtpLineIndex = self.findLine(sdpLines, 'a=fmtp:' + payload.toString());
-    if (fmtpLineIndex === null) {
-      return sdp;
-    }
-
-    sdpLines[fmtpLineIndex] = sdpLines[fmtpLineIndex].concat('; ', param);
-
-    sdp = sdpLines.join('\r\n');
-    return sdp;
-  };
-
-  // Find the line in sdpLines that starts with |prefix|, and, if specified,
-  // contains |substr| (case-insensitive search).
-  self.findLine = function (sdpLines, prefix, substr) {
-    return self.findLineInRange(sdpLines, 0, -1, prefix, substr);
-  };
-
-  // Find the line in sdpLines[startLine...endLine - 1] that starts with |prefix|
-  // and, if specified, contains |substr| (case-insensitive search).
-  self.findLineInRange = function (sdpLines, startLine, endLine, prefix, substr) {
-    var realEndLine = endLine !== -1 ? endLine : sdpLines.length;
-    for (var i = startLine; i < realEndLine; ++i) {
-      if (sdpLines[i].indexOf(prefix) === 0) {
-        if (!substr ||
-            sdpLines[i].toLowerCase().indexOf(substr.toLowerCase()) !== -1) {
-          return i;
-        }
-      }
-    }
-    return null;
-  };
-
-  // Gets the codec payload type from an a=rtpmap:X line.
-  self.getCodecPayloadType = function (sdpLine) {
-    var pattern = new RegExp('a=rtpmap:(\\d+) \\w+\\/\\d+');
-    var result = sdpLine.match(pattern);
-    return (result && result.length === 2) ? result[1] : null;
-  };
-
-  // Returns a new m= line with the specified codec as the first one.
-  self.setDefaultCodec = function (mLine, payload) {
-    var elements = mLine.split(' ');
-    var newLine = [];
-    var index = 0;
-    for (var i = 0; i < elements.length; i++) {
-      if (index === 3) { // Format of media starts from the fourth.
-        newLine[index++] = payload; // Put target payload to the first.
-      }
-      if (elements[i] !== payload) {
-        newLine[index++] = elements[i];
-      }
-    }
-    return newLine.join(' ');
-  };
-}
-
-Session.prototype.createOrUpdateStream = function () {
-  if (this.localStream) {
-    this.peerConnection.removeStream(this.localStream);
-  }
-
-  this.localStream = new MediaStream();
-  
-  if (this.config.streams.audio) {
-    this.localStream.addTrack(localAudioTrack);
-  }
-
-  if (this.config.streams.video) {
-    this.localStream.addTrack(localVideoTrack);
-  }
-
-  this.peerConnection.addStream(this.localStream);
-};
-
-Session.prototype.sendOffer = function () {
-  var self = this;
-  self.peerConnection.createOffer(function (sdp) {
-    self.peerConnection.setLocalDescription(sdp, function () {
-      console.log('Set session description success.');
-    }, function (error) {
-      console.log(error);
-    });
-
-    self.sendMessage(sdp);
-  }, function (error) {
-    console.log(error);
-  }, { mandatory: { OfferToReceiveAudio: true, OfferToReceiveVideo: !!videoConfig }});
-}
-
-Session.prototype.sendAnswer = function () {
-  var self = this;
-  self.peerConnection.createAnswer(function (sdp) {
-    self.peerConnection.setLocalDescription(sdp, function () {
-      console.log('Set session description success.');
-    }, function (error) {
-      console.log(error);
-    });
-
-    self.sendMessage(sdp);
-  }, function (error) {
-    console.log(error);
-  }, { mandatory: { OfferToReceiveAudio: true, OfferToReceiveVideo: !!videoConfig }});
-}
-
-Session.prototype.call = function () {
-  var self = this;
-
-  function call() {
-    // create the peer connection
-    self.peerConnection = new PeerConnection({
-      iceServers: [
-        { 
-          url: 'stun:stun.l.google.com:19302' 
-        },
-        { 
-          url: self.config.turn.host, 
-          username: self.config.turn.username, 
-          password: self.config.turn.password 
-        }
-      ]
-    }, { optional: [ { DtlsSrtpKeyAgreement: true } ]});
-
-    self.peerConnection.onicecandidate = self.onIceCandidate;
-    self.peerConnection.onaddstream = self.onRemoteStreamAdded;
-
-    // attach the stream to the peer connection
-    self.createOrUpdateStream.call(self);
-
-    // if initiator - create offer
-    if (self.config.isInitiator) {
-      self.sendOffer.call(self);
-    }
-  }
-
-  var missingStreams = { 
-    video: self.config.streams.video && !localVideoTrack, 
-    audio: self.config.streams.audio && !localAudioTrack 
-  };
-
-  if (missingStreams.audio || missingStreams.video) {
-    navigator.getUserMedia(missingStreams, function (stream) {
-      localStreams.push(stream);
-
-      if (missingStreams.audio) {
-        console.log('missing audio stream; retrieving');
-        localAudioTrack = stream.getAudioTracks()[0];
-      }
-
-      if (missingStreams.video) {
-        console.log('missing video stream; retrieving');
-        localVideoTrack = stream.getVideoTracks()[0];
-      }
-
-      call();
-    }, function (error) {
-      console.log(error);
-    });
-  } else {
-    call();
-  } 
-};
-
-Session.prototype.receiveMessage = function (message) {
-  var self = this;
-  if (message.type === 'offer') {
-    self.setRemote(message);
-    self.sendAnswer.call(self);
-  } else if (message.type === 'answer') {
-    self.setRemote(message);
-  } else if (message.type === 'candidate') {
-    var candidate = new RTCIceCandidate({
-      sdpMLineIndex: message.label,
-      candidate: message.candidate
-    });
-    
-    self.peerConnection.addIceCandidate(candidate, function () {
-      console.log('Remote candidate added successfully.');
-    }, function (error) {
-      console.log(error);
-    });
-     
-  } else if (message.type === 'bye') {
-    this.disconnect(false);
-  }
-};
-
-Session.prototype.renegotiate = function () {
-  if (this.config.isInitiator) {
-    this.sendOffer();
-  } else {
-    this.sendAnswer();
-  }
-};
-
-Session.prototype.disconnect = function (sendByeMessage) {
-  console.log(this.videoView);
-  if (this.videoView) {
-    removeRemoteStream(this.videoView);
-  }
-
-  if (sendByeMessage) {
-    this.sendMessage({ type: 'bye' });
-  }
-
-  this.peerConnection.close();
-  this.peerConnection = null;
-
-  this.sendMessage({ type: '__disconnected' });
-
-  onSessionDisconnect(this.sessionKey);
-};
-
-
-var sessions = {};
-var videoConfig;
-var localVideoView;
-var remoteVideoViews = [];
-
-module.exports = {
-  createSessionObject: function (success, error, options) {
-    var sessionKey = options[0];
-    var session = new Session(sessionKey, options[1], success);
-
-    session.sendMessage({
-      type: '__set_session_key',
-      sessionKey: sessionKey
-    });
-
-    sessions[sessionKey] = session;
-  },
-  call: function (success, error, options) {
-    sessions[options[0].sessionKey].call();
-  },
-  receiveMessage: function (success, error, options) {
-    sessions[options[0].sessionKey]
-      .receiveMessage(JSON.parse(options[0].message));
-  },
-  renegotiate: function (success, error, options) {
-    console.log('Renegotiation is currently only supported in iOS and Android.')
-    // var session = sessions[options[0].sessionKey];
-    // session.config = options[0].config;
-    // session.createOrUpdateStream();
-    // session.renegotiate();
-  },
-  disconnect: function (success, error, options) {
-    var session = sessions[options[0].sessionKey];
-    if (session) {
-      session.disconnect(true);
-    }
-  },
-  setVideoView: function (success, error, options) {
-    videoConfig = options[0];
-
-    if (videoConfig.containerParams.size[0] === 0 
-        || videoConfig.containerParams.size[1] === 0) {
-      return;
-    }
-
-    if (videoConfig.local) {
-      if (!localVideoView) {
-        localVideoView = document.createElement('video');
-        localVideoView.autoplay = true;
-        localVideoView.muted = true;
-        localVideoView.style.position = 'absolute';
-        localVideoView.style.zIndex = 999;
-        localVideoView.addEventListener("loadedmetadata", scaleToFill);
-
-        refreshLocalVideoView();
-
-        if (!localVideoTrack) {
-          navigator.getUserMedia({ audio: true, video: true }, function (stream) {
-            localStreams.push(stream);
-
-            localAudioTrack = stream.getAudioTracks()[0];
-            localVideoTrack = stream.getVideoTracks()[0];
-
-            localVideoView.src = URL.createObjectURL(stream);
-            localVideoView.load();
-          }, function (error) {
-            console.log(error);
-          }); 
-        } else {
-          var stream = new MediaStream();
-          stream.addTrack(localVideoTrack);
-
-          localVideoView.src = URL.createObjectURL(stream);
-          localVideoView.load();         
-        }
-
-        document.body.appendChild(localVideoView);
-      } else {    
-        refreshLocalVideoView();
-        refreshVideoContainer();
-      }
-    }
-  },
-  hideVideoView: function (success, error, options) {
-    localVideoView.style.display = 'none';
-    remoteVideoViews.forEach(function (remoteVideoView) {
-      remoteVideoView.style.display = 'none';
-    });
-  },
-  showVideoView: function (success, error, options) {
-    localVideoView.style.display = '';
-    remoteVideoViews.forEach(function (remoteVideoView) {
-      remoteVideoView.style.display = '';
-    });
-  }
-};
-
-function addRemoteStream(stream) {
-  var videoView = document.createElement('video');
-  videoView.autoplay = true;
-  videoView.addEventListener("loadedmetadata", scaleToFill);
-  videoView.style.position = 'absolute';
-  videoView.style.zIndex = 998;
-
-  videoView.src = URL.createObjectURL(stream);
-  videoView.load();
-
-  remoteVideoViews.push(videoView);
-  document.body.appendChild(videoView);
-
-  refreshVideoContainer();
-  return videoView;
-}
-
-function removeRemoteStream(videoView) {
-  console.log(remoteVideoViews);
-  videoView.parentNode.removeChild(videoView);
-  remoteVideoViews.splice(videoView, 1);
-  console.log(remoteVideoViews);
-
-  refreshVideoContainer();
-}
-
-function getCenter(videoCount, videoSize, containerSize) {
-  return Math.round((containerSize - videoSize * videoCount) / 2); 
-}
-
-function refreshVideoContainer() {
-  var n = remoteVideoViews.length;
-
-  if (n === 0) {
-    return;
-  }
-
-  var rows = n < 9 ? 2 : 3;
-  var videosInRow = n === 2 ? 2 : Math.ceil(n/rows);    
-
-  var videoSize = videoConfig.containerParams.size[0] / videosInRow;
-  var actualRows = Math.ceil(n / videosInRow);
-
-  var y = getCenter(actualRows, 
-                    videoSize,
-                    videoConfig.containerParams.size[1])
-          + videoConfig.containerParams.position[1];
-
-  var videoViewIndex = 0;
-
-  for (var row = 0; row < rows && videoViewIndex < n; row++) {
-    var x = videoConfig.containerParams.position[0] + 
-      getCenter(row < rows - 1 || n % rows === 0 ? videosInRow : n - (Math.min(n, videoViewIndex + videosInRow) - 1), 
-                videoSize,
-                videoConfig.containerParams.size[0]);
-
-    for (var video = 0; video < videosInRow && videoViewIndex < n; video++) {
-      var videoView = remoteVideoViews[videoViewIndex++];
-      videoView.style.width = videoSize + 'px';
-      videoView.style.height = videoSize + 'px';
-
-      videoView.style.left = x + 'px';
-      videoView.style.top = y + 'px';
-
-      x += videoSize;
-    }
-
-    y += videoSize;
-  }
-}
-
-function refreshLocalVideoView() {
-  localVideoView.style.width = videoConfig.local.size[0] + 'px';
-  localVideoView.style.height = videoConfig.local.size[1] + 'px';
-
-  localVideoView.style.left = 
-    (videoConfig.containerParams.position[0] + videoConfig.local.position[0]) + 'px';
-
-  localVideoView.style.top = 
-    (videoConfig.containerParams.position[1] + videoConfig.local.position[1]) + 'px';       
-}
-
-function scaleToFill(event) {
-  var element = this;
-  var targetRatio = element.offsetWidth / element.offsetHeight;
-  var lastScaleType, lastAdjustmentRatio;
-
-  function refreshTransform () {
-    var widthIsLargerThanHeight = element.videoWidth > element.videoHeight;
-    var actualRatio = element.videoWidth / element.videoHeight;
-
-    var scaleType = widthIsLargerThanHeight ? 'scaleY' : 'scaleX';
-    var adjustmentRatio = widthIsLargerThanHeight ? 
-      actualRatio / targetRatio : 
-      targetRatio / actualRatio ; 
-
-    if (lastScaleType !== scaleType || lastAdjustmentRatio !== adjustmentRatio) {
-      var transform = scaleType + '(' + adjustmentRatio + ')';
-
-      element.style.webkitTransform = transform;
-      element.style.MozTransform = transform;
-      element.style.msTransform = transform;
-      element.style.OTransform = transform;
-      element.style.transform = transform;
-
-      lastScaleType = scaleType;
-      lastAdjustmentRatio = adjustmentRatio;
-    }
-
-    setTimeout(refreshTransform, 100);
-  }
-
-  refreshTransform();
-}
-
-function onSessionDisconnect(sessionKey) {
-  delete sessions[sessionKey];
-
-  if (Object.keys(sessions).length === 0) {
-    if (localVideoView) {
-      document.body.removeChild(localVideoView);
-      localVideoView = null;
-    }
-
-    localStreams.forEach(function (stream) {
-      stream.getTracks().forEach( function(track) { 
-        track.stop();
-      });
-    });
-
-    localStreams = [];
-    localVideoTrack = null;
-    localAudioTrack = null;
-  }
-}
-
-require("cordova/exec/proxy").add("PhoneRTCPlugin", module.exports);
-});
-
 // Platform: browser
 // 6950f96eba7c2c0181bc76d98443446068e0ea1e
 /*
@@ -2513,10 +2008,514 @@ exports.checkPermissions = function (success, fail) {
 };
 });
 
-angular.module("hariRtc").run(["$templateCache", function($templateCache) {$templateCache.put("views/call.html","<ion-content on-scroll=\"updateVideoPosition()\" on-scroll-complete=\"updateVideoPosition()\">\n    <div class=\"calling-container\" ng-if=\"isCalling && !callInProgress\">\n      <p>Calling to <span class=\"balanced\">{{ contactName }}</span>...</p>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Nevermind\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"!isCalling && !callInProgress\">\n      <p><span class=\"balanced\">{{ contactName }}</span> is calling you</p>\n\n      <button class=\"button button-positive\" ng-click=\"answer()\">\n        Answer\n      </button>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Ignore\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"callInProgress\">\n      <p>\n        Call in progress...\n      </p>\n\n      <button class=\"button button-assertive\" ng-click=\"end()\">\n        End\n      </button>\n    </div>\n\n    <video-view></video-view>\n\n  </ion-content>");
+cordova.define("com.dooble.phonertc.PhoneRTCProxy", function(require, exports, module) { 
+var PeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
+var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
+var MediaStream = window.webkitMediaStream || window.mozMediaStream || window.MediaStream;
+
+navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
+
+var localStreams = [];
+var localVideoTrack, localAudioTrack;
+
+function Session(sessionKey, config, sendMessageCallback) {
+  var self = this;
+  self.sessionKey = sessionKey;
+  self.config = config;
+  self.sendMessage = sendMessageCallback;
+
+  self.onIceCandidate = function (event) {
+    if (event.candidate) {
+      self.sendMessage({
+        type: 'candidate',
+        label: event.candidate.sdpMLineIndex,
+        id: event.candidate.sdpMid,
+        candidate: event.candidate.candidate
+      });
+    }
+  };
+
+  self.onRemoteStreamAdded = function (event) {
+    self.videoView = addRemoteStream(event.stream);
+    self.sendMessage({ type: '__answered' });
+  };
+
+  self.setRemote = function (message) {
+    message.sdp = self.addCodecParam(message.sdp, 'opus/48000', 'stereo=1');
+
+    this.peerConnection.setRemoteDescription(new SessionDescription(message), function () {
+      console.log('setRemote success');
+    }, function (error) { 
+      console.log(error); 
+    });
+  };
+
+  // Adds fmtp param to specified codec in SDP.
+  self.addCodecParam = function (sdp, codec, param) {
+    var sdpLines = sdp.split('\r\n');
+
+    // Find opus payload.
+    var index = self.findLine(sdpLines, 'a=rtpmap', codec);
+    var payload;
+    if (index) {
+      payload = self.getCodecPayloadType(sdpLines[index]);
+    }
+
+    // Find the payload in fmtp line.
+    var fmtpLineIndex = self.findLine(sdpLines, 'a=fmtp:' + payload.toString());
+    if (fmtpLineIndex === null) {
+      return sdp;
+    }
+
+    sdpLines[fmtpLineIndex] = sdpLines[fmtpLineIndex].concat('; ', param);
+
+    sdp = sdpLines.join('\r\n');
+    return sdp;
+  };
+
+  // Find the line in sdpLines that starts with |prefix|, and, if specified,
+  // contains |substr| (case-insensitive search).
+  self.findLine = function (sdpLines, prefix, substr) {
+    return self.findLineInRange(sdpLines, 0, -1, prefix, substr);
+  };
+
+  // Find the line in sdpLines[startLine...endLine - 1] that starts with |prefix|
+  // and, if specified, contains |substr| (case-insensitive search).
+  self.findLineInRange = function (sdpLines, startLine, endLine, prefix, substr) {
+    var realEndLine = endLine !== -1 ? endLine : sdpLines.length;
+    for (var i = startLine; i < realEndLine; ++i) {
+      if (sdpLines[i].indexOf(prefix) === 0) {
+        if (!substr ||
+            sdpLines[i].toLowerCase().indexOf(substr.toLowerCase()) !== -1) {
+          return i;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Gets the codec payload type from an a=rtpmap:X line.
+  self.getCodecPayloadType = function (sdpLine) {
+    var pattern = new RegExp('a=rtpmap:(\\d+) \\w+\\/\\d+');
+    var result = sdpLine.match(pattern);
+    return (result && result.length === 2) ? result[1] : null;
+  };
+
+  // Returns a new m= line with the specified codec as the first one.
+  self.setDefaultCodec = function (mLine, payload) {
+    var elements = mLine.split(' ');
+    var newLine = [];
+    var index = 0;
+    for (var i = 0; i < elements.length; i++) {
+      if (index === 3) { // Format of media starts from the fourth.
+        newLine[index++] = payload; // Put target payload to the first.
+      }
+      if (elements[i] !== payload) {
+        newLine[index++] = elements[i];
+      }
+    }
+    return newLine.join(' ');
+  };
+}
+
+Session.prototype.createOrUpdateStream = function () {
+  if (this.localStream) {
+    this.peerConnection.removeStream(this.localStream);
+  }
+
+  this.localStream = new MediaStream();
+  
+  if (this.config.streams.audio) {
+    this.localStream.addTrack(localAudioTrack);
+  }
+
+  if (this.config.streams.video) {
+    this.localStream.addTrack(localVideoTrack);
+  }
+
+  this.peerConnection.addStream(this.localStream);
+};
+
+Session.prototype.sendOffer = function () {
+  var self = this;
+  self.peerConnection.createOffer(function (sdp) {
+    self.peerConnection.setLocalDescription(sdp, function () {
+      console.log('Set session description success.');
+    }, function (error) {
+      console.log(error);
+    });
+
+    self.sendMessage(sdp);
+  }, function (error) {
+    console.log(error);
+  }, { mandatory: { OfferToReceiveAudio: true, OfferToReceiveVideo: !!videoConfig }});
+}
+
+Session.prototype.sendAnswer = function () {
+  var self = this;
+  self.peerConnection.createAnswer(function (sdp) {
+    self.peerConnection.setLocalDescription(sdp, function () {
+      console.log('Set session description success.');
+    }, function (error) {
+      console.log(error);
+    });
+
+    self.sendMessage(sdp);
+  }, function (error) {
+    console.log(error);
+  }, { mandatory: { OfferToReceiveAudio: true, OfferToReceiveVideo: !!videoConfig }});
+}
+
+Session.prototype.call = function () {
+  var self = this;
+
+  function call() {
+    // create the peer connection
+    self.peerConnection = new PeerConnection({
+      iceServers: [
+        { 
+          url: 'stun:stun.l.google.com:19302' 
+        },
+        { 
+          url: self.config.turn.host, 
+          username: self.config.turn.username, 
+          password: self.config.turn.password 
+        }
+      ]
+    }, { optional: [ { DtlsSrtpKeyAgreement: true } ]});
+
+    self.peerConnection.onicecandidate = self.onIceCandidate;
+    self.peerConnection.onaddstream = self.onRemoteStreamAdded;
+
+    // attach the stream to the peer connection
+    self.createOrUpdateStream.call(self);
+
+    // if initiator - create offer
+    if (self.config.isInitiator) {
+      self.sendOffer.call(self);
+    }
+  }
+
+  var missingStreams = { 
+    video: self.config.streams.video && !localVideoTrack, 
+    audio: self.config.streams.audio && !localAudioTrack 
+  };
+
+  if (missingStreams.audio || missingStreams.video) {
+    navigator.getUserMedia(missingStreams, function (stream) {
+      localStreams.push(stream);
+
+      if (missingStreams.audio) {
+        console.log('missing audio stream; retrieving');
+        localAudioTrack = stream.getAudioTracks()[0];
+      }
+
+      if (missingStreams.video) {
+        console.log('missing video stream; retrieving');
+        localVideoTrack = stream.getVideoTracks()[0];
+      }
+
+      call();
+    }, function (error) {
+      console.log(error);
+    });
+  } else {
+    call();
+  } 
+};
+
+Session.prototype.receiveMessage = function (message) {
+  var self = this;
+  if (message.type === 'offer') {
+    self.setRemote(message);
+    self.sendAnswer.call(self);
+  } else if (message.type === 'answer') {
+    self.setRemote(message);
+  } else if (message.type === 'candidate') {
+    var candidate = new RTCIceCandidate({
+      sdpMLineIndex: message.label,
+      candidate: message.candidate
+    });
+    
+    self.peerConnection.addIceCandidate(candidate, function () {
+      console.log('Remote candidate added successfully.');
+    }, function (error) {
+      console.log(error);
+    });
+     
+  } else if (message.type === 'bye') {
+    this.disconnect(false);
+  }
+};
+
+Session.prototype.renegotiate = function () {
+  if (this.config.isInitiator) {
+    this.sendOffer();
+  } else {
+    this.sendAnswer();
+  }
+};
+
+Session.prototype.disconnect = function (sendByeMessage) {
+  console.log(this.videoView);
+  if (this.videoView) {
+    removeRemoteStream(this.videoView);
+  }
+
+  if (sendByeMessage) {
+    this.sendMessage({ type: 'bye' });
+  }
+
+  this.peerConnection.close();
+  this.peerConnection = null;
+
+  this.sendMessage({ type: '__disconnected' });
+
+  onSessionDisconnect(this.sessionKey);
+};
+
+
+var sessions = {};
+var videoConfig;
+var localVideoView;
+var remoteVideoViews = [];
+
+module.exports = {
+  createSessionObject: function (success, error, options) {
+    var sessionKey = options[0];
+    var session = new Session(sessionKey, options[1], success);
+
+    session.sendMessage({
+      type: '__set_session_key',
+      sessionKey: sessionKey
+    });
+
+    sessions[sessionKey] = session;
+  },
+  call: function (success, error, options) {
+    sessions[options[0].sessionKey].call();
+  },
+  receiveMessage: function (success, error, options) {
+    sessions[options[0].sessionKey]
+      .receiveMessage(JSON.parse(options[0].message));
+  },
+  renegotiate: function (success, error, options) {
+    console.log('Renegotiation is currently only supported in iOS and Android.')
+    // var session = sessions[options[0].sessionKey];
+    // session.config = options[0].config;
+    // session.createOrUpdateStream();
+    // session.renegotiate();
+  },
+  disconnect: function (success, error, options) {
+    var session = sessions[options[0].sessionKey];
+    if (session) {
+      session.disconnect(true);
+    }
+  },
+  setVideoView: function (success, error, options) {
+    videoConfig = options[0];
+
+    if (videoConfig.containerParams.size[0] === 0 
+        || videoConfig.containerParams.size[1] === 0) {
+      return;
+    }
+
+    if (videoConfig.local) {
+      if (!localVideoView) {
+        localVideoView = document.createElement('video');
+        localVideoView.autoplay = true;
+        localVideoView.muted = true;
+        localVideoView.style.position = 'absolute';
+        localVideoView.style.zIndex = 999;
+        localVideoView.addEventListener("loadedmetadata", scaleToFill);
+
+        refreshLocalVideoView();
+
+        if (!localVideoTrack) {
+          navigator.getUserMedia({ audio: true, video: true }, function (stream) {
+            localStreams.push(stream);
+
+            localAudioTrack = stream.getAudioTracks()[0];
+            localVideoTrack = stream.getVideoTracks()[0];
+
+            localVideoView.src = URL.createObjectURL(stream);
+            localVideoView.load();
+          }, function (error) {
+            console.log(error);
+          }); 
+        } else {
+          var stream = new MediaStream();
+          stream.addTrack(localVideoTrack);
+
+          localVideoView.src = URL.createObjectURL(stream);
+          localVideoView.load();         
+        }
+
+        document.body.appendChild(localVideoView);
+      } else {    
+        refreshLocalVideoView();
+        refreshVideoContainer();
+      }
+    }
+  },
+  hideVideoView: function (success, error, options) {
+    localVideoView.style.display = 'none';
+    remoteVideoViews.forEach(function (remoteVideoView) {
+      remoteVideoView.style.display = 'none';
+    });
+  },
+  showVideoView: function (success, error, options) {
+    localVideoView.style.display = '';
+    remoteVideoViews.forEach(function (remoteVideoView) {
+      remoteVideoView.style.display = '';
+    });
+  }
+};
+
+function addRemoteStream(stream) {
+  var videoView = document.createElement('video');
+  videoView.autoplay = true;
+  videoView.addEventListener("loadedmetadata", scaleToFill);
+  videoView.style.position = 'absolute';
+  videoView.style.zIndex = 998;
+
+  videoView.src = URL.createObjectURL(stream);
+  videoView.load();
+
+  remoteVideoViews.push(videoView);
+  document.body.appendChild(videoView);
+
+  refreshVideoContainer();
+  return videoView;
+}
+
+function removeRemoteStream(videoView) {
+  console.log(remoteVideoViews);
+  videoView.parentNode.removeChild(videoView);
+  remoteVideoViews.splice(videoView, 1);
+  console.log(remoteVideoViews);
+
+  refreshVideoContainer();
+}
+
+function getCenter(videoCount, videoSize, containerSize) {
+  return Math.round((containerSize - videoSize * videoCount) / 2); 
+}
+
+function refreshVideoContainer() {
+  var n = remoteVideoViews.length;
+
+  if (n === 0) {
+    return;
+  }
+
+  var rows = n < 9 ? 2 : 3;
+  var videosInRow = n === 2 ? 2 : Math.ceil(n/rows);    
+
+  var videoSize = videoConfig.containerParams.size[0] / videosInRow;
+  var actualRows = Math.ceil(n / videosInRow);
+
+  var y = getCenter(actualRows, 
+                    videoSize,
+                    videoConfig.containerParams.size[1])
+          + videoConfig.containerParams.position[1];
+
+  var videoViewIndex = 0;
+
+  for (var row = 0; row < rows && videoViewIndex < n; row++) {
+    var x = videoConfig.containerParams.position[0] + 
+      getCenter(row < rows - 1 || n % rows === 0 ? videosInRow : n - (Math.min(n, videoViewIndex + videosInRow) - 1), 
+                videoSize,
+                videoConfig.containerParams.size[0]);
+
+    for (var video = 0; video < videosInRow && videoViewIndex < n; video++) {
+      var videoView = remoteVideoViews[videoViewIndex++];
+      videoView.style.width = videoSize + 'px';
+      videoView.style.height = videoSize + 'px';
+
+      videoView.style.left = x + 'px';
+      videoView.style.top = y + 'px';
+
+      x += videoSize;
+    }
+
+    y += videoSize;
+  }
+}
+
+function refreshLocalVideoView() {
+  localVideoView.style.width = videoConfig.local.size[0] + 'px';
+  localVideoView.style.height = videoConfig.local.size[1] + 'px';
+
+  localVideoView.style.left = 
+    (videoConfig.containerParams.position[0] + videoConfig.local.position[0]) + 'px';
+
+  localVideoView.style.top = 
+    (videoConfig.containerParams.position[1] + videoConfig.local.position[1]) + 'px';       
+}
+
+function scaleToFill(event) {
+  var element = this;
+  var targetRatio = element.offsetWidth / element.offsetHeight;
+  var lastScaleType, lastAdjustmentRatio;
+
+  function refreshTransform () {
+    var widthIsLargerThanHeight = element.videoWidth > element.videoHeight;
+    var actualRatio = element.videoWidth / element.videoHeight;
+
+    var scaleType = widthIsLargerThanHeight ? 'scaleY' : 'scaleX';
+    var adjustmentRatio = widthIsLargerThanHeight ? 
+      actualRatio / targetRatio : 
+      targetRatio / actualRatio ; 
+
+    if (lastScaleType !== scaleType || lastAdjustmentRatio !== adjustmentRatio) {
+      var transform = scaleType + '(' + adjustmentRatio + ')';
+
+      element.style.webkitTransform = transform;
+      element.style.MozTransform = transform;
+      element.style.msTransform = transform;
+      element.style.OTransform = transform;
+      element.style.transform = transform;
+
+      lastScaleType = scaleType;
+      lastAdjustmentRatio = adjustmentRatio;
+    }
+
+    setTimeout(refreshTransform, 100);
+  }
+
+  refreshTransform();
+}
+
+function onSessionDisconnect(sessionKey) {
+  delete sessions[sessionKey];
+
+  if (Object.keys(sessions).length === 0) {
+    if (localVideoView) {
+      document.body.removeChild(localVideoView);
+      localVideoView = null;
+    }
+
+    localStreams.forEach(function (stream) {
+      stream.getTracks().forEach( function(track) { 
+        track.stop();
+      });
+    });
+
+    localStreams = [];
+    localVideoTrack = null;
+    localAudioTrack = null;
+  }
+}
+
+require("cordova/exec/proxy").add("PhoneRTCPlugin", module.exports);
+});
+
+angular.module("hariRtc").run(["$templateCache", function($templateCache) {$templateCache.put("views/call.html","<div on-scroll=\"updateVideoPosition()\" on-scroll-complete=\"updateVideoPosition()\">\n    <div class=\"calling-container\" ng-if=\"isCalling && !callInProgress\">\n      <p>Calling to <span class=\"balanced\">{{ contactName }}</span>...</p>\n\n      <button class=\"button button-assertive\" ng-click=\"ignore()\">\n        Nevermind\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"!isCalling && !callInProgress\">\n      <p><span class=\"balanced\">{{ contactName }}</span> is calling you</p>\n\n      <button class=\"ui button primary\" ng-click=\"answer()\">\n        Answer\n      </button>\n\n      <button class=\"ui button red\" ng-click=\"ignore()\">\n        Ignore\n      </button>\n    </div>\n\n    <div class=\"calling-container\" ng-if=\"callInProgress\">\n      <p>\n        Call in progress...\n      </p>\n\n      <button class=\"ui button red\" ng-click=\"end()\">\n        End\n      </button>\n    </div>\n\n    <video-view></video-view>\n\n  </div>");
 $templateCache.put("views/select_contact.html","<ion-modal-view>\n  <ion-header-bar class=\"bar-positive\">\n    <h1 class=\"title\">Add Contact to Call</h1>\n      <button class=\"button button-clear\" ng-click=\"closeSelectContactModal()\">\n        Close\n      </button>\n  </ion-header-bar>\n  <ion-content>\n    <ul class=\"list\">\n      <li class=\"item item-button-right\"\n          ng-repeat=\"contact in allContacts | filter:hideCurrentUsers()\">\n        <i class=\"icon ion-record\" style=\"color: green\"></i>\n        {{ contact }}\n        <button class=\"button button-positive\" \n                ng-click=\"addContact(contact)\">\n          <i class=\"icon ion-ios7-telephone\"></i>\n        </button>\n      </li>\n    </ul>\n  </ion-content>\n</ion-modal-view>");}]);
 angular.module('hariRtc')
-.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "$ionicModal", "signaling", "ContactsService", "parameters",function ($scope, $state, $rootScope, $timeout, $ionicModal, signaling, ContactsService, parameters) {
+.controller('CallCtrl', ["$scope", "$state", "$rootScope", "$timeout", "signaling", "ContactsService", "hariModal", "parameters",function ($scope, $state, $rootScope, $timeout, signaling, ContactsService, parameters) {
 
     console.log("parameter "+JSON.stringify(parameters));
 
@@ -2532,12 +2531,14 @@ angular.module('hariRtc')
     $scope.hideFromContactList = [$scope.contactName];
     $scope.muted = false;
 
+    /*
     $ionicModal.fromTemplateUrl('views/select_contact.html', {
       scope: $scope,
       animation: 'slide-in-up'
     }).then(function(modal) {
       $scope.selectContactModal = modal;
     });
+    */
 
     //ring! well actually beep
     navigator.notification.beep(1);
@@ -2581,7 +2582,7 @@ angular.module('hariRtc')
 
         if (Object.keys($scope.contacts).length === 0) {
           signaling.emit('sendMessage', contactName, { type: 'ignore' });
-          $scope.closeModal();
+          hariModal.deactivate();
         }
       });
 
@@ -2601,7 +2602,7 @@ angular.module('hariRtc')
         $scope.contacts[contactNames[0]].disconnect();
       } else {
         signaling.emit('sendMessage', parameters.contactName, { type: 'ignore' });
-        $scope.closeModal();
+        hariModal.deactivate();
       }
       
     };
@@ -2612,7 +2613,7 @@ angular.module('hariRtc')
         $scope.contacts[contact].close();
         delete $scope.contacts[contact];
       });
-      $scope.closeModal();
+      hariModal.deactivate();
     };
 
     $scope.answer = function () {
@@ -2701,10 +2702,10 @@ angular.module('hariRtc')
             }
 
             if (Object.keys($scope.contacts).length === 0) {
-              $scope.closeModal();
+              hariModal.deactivate();
             }
           } else {
-            $scope.closeModal();
+            hariModal.deactivate();
           }
 
           break;
@@ -2796,89 +2797,101 @@ angular.module('hariRtc.services')
       }
     }
   }]);
+
+/*
+ * hariModal (portal/semantic ui version)
+ * (c) 2016 Wayan P
+ * Based on angular-modal by Brian Ford
+ */
+
+'use strict';
+
 angular
 .module('hariRtc.services')
-.factory("hariModal", ["$ionicModal", "$rootScope", "$q", "$injector", "$controller", function($ionicModal, $rootScope, $q, $injector, $controller) {
+.factory('hariModal', ['$animate', '$compile', '$rootScope', '$controller', '$q', '$http', '$templateCache', modalFactoryFactory]);
+
+function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $http, $templateCache) {
+  return function modalFactory (config) {
+    if (!(!config.template ^ !config.templateUrl)) {
+      throw new Error('Expected modal to have exacly one of either `template` or `templateUrl`');
+    }
+
+    var template      = config.template,
+        controller    = config.controller || null,
+        controllerAs  = config.controllerAs,
+        parameters    = config.parameters,
+        container     = angular.element(config.container || document.body),
+        element       = null,
+        html,
+        scope;
+
+    if (config.template) {
+      html = $q.when(config.template);
+    } else {
+      html = $http.get(config.templateUrl, {
+        cache: $templateCache
+      }).
+      then(function (response) {
+        return response.data;
+      });
+    }
+
+    function activate () {
+      return html.then(function (html) {
+        if (!element) {
+          attach(html, parameters);
+        }
+      });
+    }
+
+
+    function attach (html, locals) {
+      element = angular.element(html);
+      if (element.length === 0) {
+        throw new Error('The template contains no elements; you need to wrap text nodes')
+      }
+      scope = $rootScope.$new();
+      if (controller) {
+        if (!locals) {
+          locals = {};
+        }
+        locals.$scope = scope;
+        var ctrl = $controller(controller, locals);
+        if (controllerAs) {
+          scope[controllerAs] = ctrl;
+        }
+      } else if (locals) {
+        for (var prop in locals) {
+          scope[prop] = locals[prop];
+        }
+      }
+      $compile(element)(scope);
+      return $animate.enter(element, container);
+    }
+
+    function deactivate () {
+      if (!element) {
+        return $q.when();
+      }
+      return $animate.leave(element).then(function () {
+        scope.$destroy();
+        scope = null;
+        element.remove();
+        element = null;
+      });
+    }
+
+    function active () {
+      return !!element;
+    }
 
     return {
-        show: show
-    }
-
-    function show(templateUrl, controller, parameters) {
-        // Grab the injector and create a new scope
-        var deferred = $q.defer(),
-            ctrlInstance,
-            modalScope = $rootScope.$new(),
-            thisScopeId = modalScope.$id;
-
-        $ionicModal.fromTemplateUrl(templateUrl, {
-            scope: modalScope,
-            animation: 'slide-in-up'
-        }).then(function (modal) {
-            modalScope.modal = modal;
-
-            modalScope.openModal = function () {
-                modalScope.modal.show();
-            };
-            modalScope.closeModal = function (result) {
-                deferred.resolve(result);
-                modalScope.modal.hide();
-            };
-            modalScope.$on('modal.hidden', function (thisModal) {
-                if (thisModal.currentScope) {
-                    var modalScopeId = thisModal.currentScope.$id;
-                    if (thisScopeId === modalScopeId) {
-                        deferred.resolve(null);
-                        _cleanup(thisModal.currentScope);
-                    }
-                }
-            });
-
-            // Invoke the controller
-            var locals = { '$scope': modalScope, 'parameters': parameters };
-            var ctrlEval = _evalController(controller);
-            ctrlInstance = $controller(controller, locals);
-            if (ctrlEval.isControllerAs) {
-                ctrlInstance.openModal = modalScope.openModal;
-                ctrlInstance.closeModal = modalScope.closeModal;
-            }
-
-            modalScope.modal.show();
-
-        }, function (err) {
-            deferred.reject(err);
-        });
-
-        return deferred.promise;
-    }
-
-    function _cleanup(scope) {
-        scope.$destroy();
-        if (scope.modal) {
-            scope.modal.remove();
-        }
-    }
-
-    function _evalController(ctrlName) {
-        var result = {
-            isControllerAs: false,
-            controllerName: '',
-            propName: ''
-        };
-        var fragments = (ctrlName || '').trim().split(/\s+/);
-        result.isControllerAs = fragments.length === 3 && (fragments[1] || '').toLowerCase() === 'as';
-        if (result.isControllerAs) {
-            result.controllerName = fragments[0];
-            result.propName = fragments[2];
-        } else {
-            result.controllerName = ctrlName;
-        }
-
-        return result;
-    }
-
-
-}]) // end
+      activate: activate,
+      deactivate: deactivate,
+      active: active
+    };
+  };
+}
 angular.module('hariRtc.services').factory('signaling', ["socketFactory", "env",function (socketFactory, env) {
 
 	if(!env.signalingEndpoint){

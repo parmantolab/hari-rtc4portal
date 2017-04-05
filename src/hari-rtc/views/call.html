@@ -1,4 +1,4 @@
-<ion-content on-scroll="updateVideoPosition()" on-scroll-complete="updateVideoPosition()">
+<div on-scroll="updateVideoPosition()" on-scroll-complete="updateVideoPosition()">
     <div class="calling-container" ng-if="isCalling && !callInProgress">
       <p>Calling to <span class="balanced">{{ contactName }}</span>...</p>
 
@@ -10,11 +10,11 @@
     <div class="calling-container" ng-if="!isCalling && !callInProgress">
       <p><span class="balanced">{{ contactName }}</span> is calling you</p>
 
-      <button class="button button-positive" ng-click="answer()">
+      <button class="ui button primary" ng-click="answer()">
         Answer
       </button>
 
-      <button class="button button-assertive" ng-click="ignore()">
+      <button class="ui button red" ng-click="ignore()">
         Ignore
       </button>
     </div>
@@ -24,11 +24,11 @@
         Call in progress...
       </p>
 
-      <button class="button button-assertive" ng-click="end()">
+      <button class="ui button red" ng-click="end()">
         End
       </button>
     </div>
 
     <video-view></video-view>
 
-  </ion-content>
+  </div>

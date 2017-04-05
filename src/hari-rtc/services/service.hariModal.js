@@ -1,83 +1,95 @@
+
+/*
+ * hariModal (portal/semantic ui version)
+ * (c) 2016 Wayan P
+ * Based on angular-modal by Brian Ford
+ */
+
+'use strict';
+
 angular
 .module('hariRtc.services')
-.factory("hariModal", ["$ionicModal", "$rootScope", "$q", "$injector", "$controller", function($ionicModal, $rootScope, $q, $injector, $controller) {
+.factory('hariModal', ['$animate', '$compile', '$rootScope', '$controller', '$q', '$http', '$templateCache', modalFactoryFactory]);
+
+function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $http, $templateCache) {
+  return function modalFactory (config) {
+    if (!(!config.template ^ !config.templateUrl)) {
+      throw new Error('Expected modal to have exacly one of either `template` or `templateUrl`');
+    }
+
+    var template      = config.template,
+        controller    = config.controller || null,
+        controllerAs  = config.controllerAs,
+        parameters    = config.parameters,
+        container     = angular.element(config.container || document.body),
+        element       = null,
+        html,
+        scope;
+
+    if (config.template) {
+      html = $q.when(config.template);
+    } else {
+      html = $http.get(config.templateUrl, {
+        cache: $templateCache
+      }).
+      then(function (response) {
+        return response.data;
+      });
+    }
+
+    function activate () {
+      return html.then(function (html) {
+        if (!element) {
+          attach(html, parameters);
+        }
+      });
+    }
+
+
+    function attach (html, locals) {
+      element = angular.element(html);
+      if (element.length === 0) {
+        throw new Error('The template contains no elements; you need to wrap text nodes')
+      }
+      scope = $rootScope.$new();
+      if (controller) {
+        if (!locals) {
+          locals = {};
+        }
+        locals.$scope = scope;
+        var ctrl = $controller(controller, locals);
+        if (controllerAs) {
+          scope[controllerAs] = ctrl;
+        }
+      } else if (locals) {
+        for (var prop in locals) {
+          scope[prop] = locals[prop];
+        }
+      }
+      $compile(element)(scope);
+      return $animate.enter(element, container);
+    }
+
+    function deactivate () {
+      if (!element) {
+        return $q.when();
+      }
+      return $animate.leave(element).then(function () {
+        scope.$destroy();
+        scope = null;
+        element.remove();
+        element = null;
+      });
+    }
+
+    function active () {
+      return !!element;
+    }
 
     return {
-        show: show
-    }
-
-    function show(templateUrl, controller, parameters) {
-        // Grab the injector and create a new scope
-        var deferred = $q.defer(),
-            ctrlInstance,
-            modalScope = $rootScope.$new(),
-            thisScopeId = modalScope.$id;
-
-        $ionicModal.fromTemplateUrl(templateUrl, {
-            scope: modalScope,
-            animation: 'slide-in-up'
-        }).then(function (modal) {
-            modalScope.modal = modal;
-
-            modalScope.openModal = function () {
-                modalScope.modal.show();
-            };
-            modalScope.closeModal = function (result) {
-                deferred.resolve(result);
-                modalScope.modal.hide();
-            };
-            modalScope.$on('modal.hidden', function (thisModal) {
-                if (thisModal.currentScope) {
-                    var modalScopeId = thisModal.currentScope.$id;
-                    if (thisScopeId === modalScopeId) {
-                        deferred.resolve(null);
-                        _cleanup(thisModal.currentScope);
-                    }
-                }
-            });
-
-            // Invoke the controller
-            var locals = { '$scope': modalScope, 'parameters': parameters };
-            var ctrlEval = _evalController(controller);
-            ctrlInstance = $controller(controller, locals);
-            if (ctrlEval.isControllerAs) {
-                ctrlInstance.openModal = modalScope.openModal;
-                ctrlInstance.closeModal = modalScope.closeModal;
-            }
-
-            modalScope.modal.show();
-
-        }, function (err) {
-            deferred.reject(err);
-        });
-
-        return deferred.promise;
-    }
-
-    function _cleanup(scope) {
-        scope.$destroy();
-        if (scope.modal) {
-            scope.modal.remove();
-        }
-    }
-
-    function _evalController(ctrlName) {
-        var result = {
-            isControllerAs: false,
-            controllerName: '',
-            propName: ''
-        };
-        var fragments = (ctrlName || '').trim().split(/\s+/);
-        result.isControllerAs = fragments.length === 3 && (fragments[1] || '').toLowerCase() === 'as';
-        if (result.isControllerAs) {
-            result.controllerName = fragments[0];
-            result.propName = fragments[2];
-        } else {
-            result.controllerName = ctrlName;
-        }
-
-        return result;
-    }
-
-
-}]) // end
+      activate: activate,
+      deactivate: deactivate,
+      active: active
+    };
+  };
+}

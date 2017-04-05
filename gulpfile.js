@@ -1,5 +1,5 @@
 var gulp = require('gulp');
-var karma = require('karma').server;
+//var karma = require('karma').server;
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
@@ -31,7 +31,10 @@ var sourceFiles = [
 
   // Make sure module files are handled first
   path.join(sourceDirectory, '/**/*.module.js'),
-
+  path.join(sourceDirectory, '/cordova.js'),
+  path.join(sourceDirectory, '/cordova_plugins.js'),
+  path.join(sourceDirectory, '/phonertc.js'),
+  path.join(sourceDirectory, '/PhoneRTCProxy.js'),
   // Then add all JavaScript files
   path.join(sourceDirectory, '/**/*.js')
 ];

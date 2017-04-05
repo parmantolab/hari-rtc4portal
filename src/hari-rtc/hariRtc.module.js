@@ -16,7 +16,6 @@
   angular.module('hariRtc',
       [
           'btford.socket-io',
-          'ionic',
           'app.config',
           'hariRtc.config',
           'hariRtc.directives',
@@ -25,7 +24,7 @@
 
 })(angular);
 
-angular.module('hariRtc').run(["$state", "signaling", "hariModal", function ($state, signaling, hariModal) {
+angular.module('hariRtc').run(["signaling", "hariModal", function (signaling, hariModal) {
   signaling.on('messageReceived', function (name, message) {
     switch (message.type) {
       case 'call': //called by other party
