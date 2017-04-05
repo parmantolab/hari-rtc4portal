@@ -61,6 +61,7 @@ function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $h
         if (controllerAs) {
           scope[controllerAs] = ctrl;
         }
+        scope.closeMe = deactivate;
       } else if (locals) {
         for (var prop in locals) {
           scope[prop] = locals[prop];
