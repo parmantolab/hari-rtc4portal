@@ -1,4 +1,4 @@
-<modal on-scroll="updateVideoPosition()" on-scroll-complete="updateVideoPosition()">
+<div class="ui modal" on-scroll="updateVideoPosition()" on-scroll-complete="updateVideoPosition()">
     <div class="calling-container" ng-if="isCalling && !callInProgress">
       <p>Calling to <span class="balanced">{{ contactName }}</span>...</p>
 
@@ -31,4 +31,4 @@
 
     <video-view></video-view>
 
-  </modal>
+  </div>
