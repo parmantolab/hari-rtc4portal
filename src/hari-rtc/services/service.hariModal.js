@@ -67,8 +67,14 @@ function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $h
           scope[prop] = locals[prop];
         }
       }
-      $compile(element)(scope);
-      return $animate.enter(element, container);
+      var modalEl = $compile(element)(scope);
+      return modalEl.modal({
+                    closable: false,
+                    duration: 100,
+                    blurring: true
+                })
+                .modal("show");
+      //return $animate.enter(element, container);
     }
 
     function deactivate () {
