@@ -203,6 +203,10 @@ exports.showVideoView = function () {
   exec(null, null, 'PhoneRTCPlugin', 'showVideoView', []);
 };
 
+exports.stopLocalStream = function () {
+  exec(null, null, 'PhoneRTCPlugin', 'stopLocalStream', []);
+};
+
 exports.checkPermissions = function (success, fail) {
   exec(success, fail, 'PhoneRTCPlugin', 'checkPermissions', []);
 };
