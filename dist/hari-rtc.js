@@ -2614,6 +2614,7 @@ angular.module('hariRtc')
       if (contactNames.length > 0) { 
         $scope.contacts[contactNames[0]].disconnect();
       } else {
+        cordova.plugins.phonertc.stopLocalStream()
         signaling.emit('sendMessage', parameters.contactName, { type: 'ignore' });
         $scope.closeMe();
       }
