@@ -363,12 +363,8 @@ module.exports = {
   },
   stopLocalStream: function (success, error, options) {
     localVideoView.style.display = 'none';
-    localStreams.forEach(function (stream) {
-      stream.getTracks().forEach( function(track) { 
-        track.stop();
-      });
-    });
-    localStreams = [];
+    localVideoTrack = null;
+    localAudioTrack = null;
   }
 };
 
