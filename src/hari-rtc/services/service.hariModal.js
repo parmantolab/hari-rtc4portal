@@ -71,7 +71,7 @@ function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $h
       return modalEl.modal({
                     closable: false,
                     duration: 100,
-                    blurring: true
+                    blurring: false
                 })
                 .modal("show");
       //return $animate.enter(element, container);
