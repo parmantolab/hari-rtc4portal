@@ -2380,7 +2380,11 @@ module.exports = {
     });
   },
   stopLocalStream: function (success, error, options) {
-    localVideoView.style.display = 'none';
+    if (localVideoView) {
+      document.body.removeChild(localVideoView);
+      localVideoView = null;
+    }
+
     localStreams.forEach(function (stream) {
       stream.getTracks().forEach( function(track) { 
         track.stop();
@@ -2467,7 +2471,6 @@ function refreshVideoContainer() {
 function refreshLocalVideoView() {
   localVideoView.style.width = videoConfig.local.size[0] + 'px';
   localVideoView.style.height = videoConfig.local.size[1] + 'px';
-  localVideoView.style.display = '';
 
   localVideoView.style.left = 
     (videoConfig.containerParams.position[0] + videoConfig.local.position[0]) + 'px';
