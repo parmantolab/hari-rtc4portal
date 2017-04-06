@@ -318,6 +318,7 @@ module.exports = {
         localVideoView.muted = true;
         localVideoView.style.position = 'absolute';
         localVideoView.style.zIndex = 1001; //need to change to 1001 because semantic modal use 999
+        localVideoView.style.display = '';
         localVideoView.addEventListener("loadedmetadata", scaleToFill);
 
         refreshLocalVideoView();
@@ -363,9 +364,6 @@ module.exports = {
   },
   stopLocalStream: function (success, error, options) {
     localVideoView.style.display = 'none';
-    remoteVideoViews.forEach(function (remoteVideoView) {
-      remoteVideoView.style.display = 'none';
-    });
     if (this.localStream) {
       this.peerConnection.removeStream(this.localStream);
     }
