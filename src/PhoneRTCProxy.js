@@ -318,7 +318,6 @@ module.exports = {
         localVideoView.muted = true;
         localVideoView.style.position = 'absolute';
         localVideoView.style.zIndex = 1001; //need to change to 1001 because semantic modal use 999
-        localVideoView.style.display = '';
         localVideoView.addEventListener("loadedmetadata", scaleToFill);
 
         refreshLocalVideoView();
@@ -364,9 +363,12 @@ module.exports = {
   },
   stopLocalStream: function (success, error, options) {
     localVideoView.style.display = 'none';
-    if (this.localStream) {
-      this.peerConnection.removeStream(this.localStream);
-    }
+    localStreams.forEach(function (stream) {
+      stream.getTracks().forEach( function(track) { 
+        track.stop();
+      });
+    });
+    localStreams = [];
   }
 };
 
@@ -444,6 +446,7 @@ function refreshVideoContainer() {
 function refreshLocalVideoView() {
   localVideoView.style.width = videoConfig.local.size[0] + 'px';
   localVideoView.style.height = videoConfig.local.size[1] + 'px';
+  localVideoView.style.display = '';
 
   localVideoView.style.left = 
     (videoConfig.containerParams.position[0] + videoConfig.local.position[0]) + 'px';
