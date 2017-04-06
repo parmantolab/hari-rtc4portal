@@ -28,7 +28,7 @@ angular.module('hariRtc').run(["signaling", "hariModal", function (signaling, ha
   signaling.on('messageReceived', function (name, message) {
     switch (message.type) {
       case 'call': //called by other party
-        var params = {parameters: {isCalling : true, contactName: name}};
+        var params = {parameters: {isCalling : false, contactName: name}};
         hariModal({templateUrl: 'views/call.html', 
                         controller: 'CallCtrl', 
                         parameters : params

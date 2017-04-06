@@ -384,7 +384,7 @@ function addRemoteStream(stream) {
   videoView.autoplay = true;
   videoView.addEventListener("loadedmetadata", scaleToFill);
   videoView.style.position = 'absolute';
-  videoView.style.zIndex = 998;
+  videoView.style.zIndex = 1000; //semantic modal use 999
 
   videoView.src = URL.createObjectURL(stream);
   videoView.load();
