@@ -8,8 +8,8 @@ angular.module('hariRtc.directives').directive('videoView', ["$rootScope", "$tim
           cordova.plugins.phonertc.setVideoView({
             container: element[0],
             local: { 
-              position: [240, 240],
-              size: [50, 50]
+              position: [500, 500],
+              size: [90, 90]
             }
           });
         }

@@ -360,6 +360,15 @@ module.exports = {
     remoteVideoViews.forEach(function (remoteVideoView) {
       remoteVideoView.style.display = '';
     });
+  },
+  stopLocalStream: function (success, error, options) {
+    localVideoView.style.display = 'none';
+    remoteVideoViews.forEach(function (remoteVideoView) {
+      remoteVideoView.style.display = 'none';
+    });
+    if (this.localStream) {
+      this.peerConnection.removeStream(this.localStream);
+    }
   }
 };
 

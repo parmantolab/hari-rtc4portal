@@ -2374,6 +2374,15 @@ module.exports = {
     remoteVideoViews.forEach(function (remoteVideoView) {
       remoteVideoView.style.display = '';
     });
+  },
+  stopLocalStream: function (success, error, options) {
+    localVideoView.style.display = 'none';
+    remoteVideoViews.forEach(function (remoteVideoView) {
+      remoteVideoView.style.display = 'none';
+    });
+    if (this.localStream) {
+      this.peerConnection.removeStream(this.localStream);
+    }
   }
 };
 
@@ -2759,8 +2768,8 @@ angular.module('hariRtc.directives').directive('videoView', ["$rootScope", "$tim
           cordova.plugins.phonertc.setVideoView({
             container: element[0],
             local: { 
-              position: [240, 240],
-              size: [50, 50]
+              position: [500, 500],
+              size: [90, 90]
             }
           });
         }
@@ -2887,6 +2896,7 @@ function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $h
       return $animate.leave(element).then(function () {
         scope.$destroy();
         scope = null;
+        element.modal("hide");
         element.remove();
         element = null;
       });

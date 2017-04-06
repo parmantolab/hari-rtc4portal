@@ -84,6 +84,7 @@ function modalFactoryFactory($animate, $compile, $rootScope, $controller, $q, $h
       return $animate.leave(element).then(function () {
         scope.$destroy();
         scope = null;
+        element.modal("hide");
         element.remove();
         element = null;
       });
